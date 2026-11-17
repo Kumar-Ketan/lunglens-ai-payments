@@ -111,53 +111,102 @@ export const createConsultation = createServerFn({ method: "POST" })
     return { id: created.id };
   });
 
-function testPaymentRef() {
-  const bytes = crypto.getRandomValues(new Uint8Array(6));
-  return `TEST-UPI-${Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("").toUpperCase()}`;
+async function loadOwnBooking(
+  supabase: { from: (t: "consultations") => any },
+  consultationId: string,
+) {
+  const { data: booking, error } = await supabase
+    .from("consultations")
+    .select("*")
+    .eq("id", consultationId)
+    .maybeSingle();
+  if (error || !booking) throw new Error("Booking not found.");
+  return booking as import("@/lib/consultations").Consultation;
 }
 
-/**
- * Demo payment confirmation. No money moves: this stands in for the step where a real
- * gateway would verify the payment before the booking is confirmed.
- */
-export const confirmTestPayment = createServerFn({ method: "POST" })
+/** Creates (or reuses) the Razorpay order for the caller's pending booking and returns checkout options. */
+export const startPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { consultationId: string }) => {
     if (!input || !isId(input.consultationId)) throw new Error("Invalid booking");
     return { consultationId: input.consultationId };
   })
   .handler(async ({ data, context }) => {
-    const { data: booking, error } = await context.supabase
-      .from("consultations")
-      .select("*")
-      .eq("id", data.consultationId)
-      .maybeSingle();
-    if (error || !booking) throw new Error("Booking not found.");
-    if (booking.status === "confirmed") return booking;
-    if (booking.status !== "pending_payment") throw new Error("This booking was cancelled.");
+    const booking = await loadOwnBooking(context.supabase, data.consultationId);
+    if (booking.status !== "pending_payment") throw new Error("This booking is not awaiting payment.");
     if (new Date(booking.slot_at).getTime() <= Date.now()) {
       throw new Error("This time slot has passed. Please book a new time.");
     }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: updated, error: upError } = await supabaseAdmin
-      .from("consultations")
-      .update({
-        status: "confirmed",
-        payment_method: "UPI QR (test mode)",
-        payment_ref: testPaymentRef(),
-        paid_at: new Date().toISOString(),
-      })
-      .eq("id", booking.id)
-      .eq("user_id", context.userId)
-      .eq("status", "pending_payment")
-      .select("*")
-      .single();
-    if (upError?.code === "23505") {
-      throw new Error("Someone else just booked this time. No money was taken. Please pick another slot.");
+    const { createOrder, razorpayKeys } = await import("@/lib/razorpay.server");
+    const { keyId } = razorpayKeys();
+    let orderId = booking.razorpay_order_id;
+    if (!orderId) {
+      const order = await createOrder({
+        amount: booking.amount_paise,
+        currency: booking.currency,
+        receipt: booking.id.slice(0, 40),
+        notes: { consultation_id: booking.id, doctor: booking.doctor_name },
+      });
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { error } = await supabaseAdmin
+        .from("consultations")
+        .update({ razorpay_order_id: order.id })
+        .eq("id", booking.id)
+        .eq("user_id", context.userId)
+        .is("razorpay_order_id", null);
+      if (error) throw new Error("Could not start the payment.");
+      const { data: fresh } = await supabaseAdmin
+        .from("consultations")
+        .select("razorpay_order_id")
+        .eq("id", booking.id)
+        .single();
+      orderId = fresh?.razorpay_order_id ?? order.id;
     }
-    if (upError || !updated) throw new Error("Could not confirm the payment.");
-    return updated;
+
+    return {
+      keyId,
+      orderId,
+      amount: booking.amount_paise,
+      currency: booking.currency,
+      description: `Consultation with ${booking.doctor_name}`,
+      prefill: { name: booking.patient_name, contact: `+91${booking.patient_phone}` },
+    };
+  });
+
+type VerifyInput = { consultationId: string; orderId: string; paymentId: string; signature: string };
+
+/** Verifies the Razorpay checkout signature and the payment itself, then confirms the booking. */
+export const verifyPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: VerifyInput) => {
+    if (!input || !isId(input.consultationId)) throw new Error("Invalid booking");
+    const ok = (v: unknown) => typeof v === "string" && v.length > 0 && v.length < 200;
+    if (!ok(input.orderId) || !ok(input.paymentId) || !ok(input.signature)) throw new Error("Invalid payment details");
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const booking = await loadOwnBooking(context.supabase, data.consultationId);
+    if (booking.status === "confirmed") return booking;
+    if (booking.razorpay_order_id !== data.orderId) throw new Error("The payment does not match this booking.");
+
+    const { isValidCheckoutSignature } = await import("@/lib/razorpay");
+    const { confirmPaidBooking, fetchPayment, razorpayKeys, SlotTakenError } = await import("@/lib/razorpay.server");
+    const { keySecret } = razorpayKeys();
+    if (!(await isValidCheckoutSignature(keySecret, data.orderId, data.paymentId, data.signature))) {
+      throw new Error("We could not verify this payment.");
+    }
+    const payment = await fetchPayment(data.paymentId);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    try {
+      return await confirmPaidBooking(supabaseAdmin, booking, payment);
+    } catch (e) {
+      if (e instanceof SlotTakenError) {
+        throw new Error("Someone else just booked this time. Your payment will be refunded. Please pick another slot.");
+      }
+      throw e;
+    }
   });
 
 /** Cancels the caller's booking if the appointment has not started yet. */
