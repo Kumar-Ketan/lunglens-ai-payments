@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TB_THRESHOLD } from "@/lib/model/tb-label";
 import { pct, scansQueryOptions, signedUrlsQueryOptions, type Scan } from "@/lib/scans";
+import { finalVerdict } from "@/lib/final-verdict";
 
 export const Route = createFileRoute("/_authenticated/history/")({
   head: () => ({
@@ -160,9 +161,9 @@ function ScanCard({ scan, thumb }: { scan: Scan; thumb: string | undefined }) {
         <p className="mt-1 truncate text-sm">{scan.patient_ref || scan.file_name}</p>
         <p className="text-xs text-muted-foreground">{new Date(scan.created_at).toLocaleString()}</p>
         <p className="mt-2 text-xs text-muted-foreground">
-          AI:{" "}
+          Final:{" "}
           {scan.ai_status === "done"
-            ? scan.ai_label
+            ? finalVerdict(scan).label
             : scan.ai_status === "failed"
               ? "failed"
               : scan.ai_status === "running"

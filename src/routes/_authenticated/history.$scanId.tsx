@@ -25,6 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { confidenceBand, TB_THRESHOLD } from "@/lib/model/tb-label";
 import { detectedConditions } from "@/lib/consult";
+import { finalVerdict } from "@/lib/final-verdict";
 import { downloadScanReport } from "@/lib/report-pdf";
 import { runAiSecondOpinion } from "@/lib/scans.functions";
 import { deleteScan, findingsOf, pct, scanQueryOptions, signedUrlsQueryOptions, type Scan } from "@/lib/scans";
@@ -106,6 +107,9 @@ function ScanResult() {
   }, [scan.ai_status]);
 
   const positive = scan.tb_probability >= TB_THRESHOLD;
+  const verdict = finalVerdict(scan);
+  const verdictTone =
+    verdict.label === "Tuberculosis" ? "text-tb" : verdict.label === "Pneumonia" ? "text-pneumonia" : verdict.label === "Normal" ? "text-normal" : "text-muted-foreground";
   const findings = findingsOf(scan);
   const aiRunning = aiBusy || scan.ai_status === "running" || scan.ai_status === "pending";
 
@@ -181,7 +185,26 @@ function ScanResult() {
         </p>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+      <div className="panel mt-8 p-6">
+        <p className="kicker text-muted-foreground">Final result · model + AI combined</p>
+        <div className="mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          <span className={`text-3xl font-semibold sm:text-4xl ${verdictTone}`}>
+            {verdict.label === "Normal" ? "No TB or pneumonia detected" : verdict.label === "Not a chest X-ray" ? verdict.label : `${verdict.label} detected`}
+          </span>
+          {aiRunning ? (
+            <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Loader2 className="size-3.5 animate-spin" aria-hidden="true" /> waiting for AI to confirm
+            </span>
+          ) : (
+            <span className="text-sm text-muted-foreground">
+              {verdict.agreement === "agree" ? "Both readers agree" : verdict.agreement === "resolved" ? "Readers differed — resolved by combined score" : "Model only"}
+            </span>
+          )}
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">{verdict.explanation}</p>
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
         <div className="panel p-5">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-semibold">Image</h2>

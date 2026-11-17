@@ -1,5 +1,6 @@
 import { confidenceBand, TB_THRESHOLD } from "@/lib/model/tb-label";
 import { findingsOf, pct, type Scan } from "@/lib/scans";
+import { finalVerdict } from "@/lib/final-verdict";
 
 async function toDataUrl(url: string) {
   const blob = await (await fetch(url)).blob();
@@ -84,6 +85,15 @@ export async function downloadScanReport(scan: Scan, imageUrl?: string, heatmapU
   // TB model
   doc.setDrawColor(220, 220, 220);
   doc.setTextColor(30, 30, 30);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  const verdict = finalVerdict(scan);
+  doc.text(`Final result: ${verdict.label}`, M, y);
+  y += 5;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text(doc.splitTextToSize(verdict.explanation, 180), M, y);
+  y += 9;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.text("1. Trained model — tuberculosis", M, y);
