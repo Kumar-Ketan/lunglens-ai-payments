@@ -14,6 +14,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      consultations: {
+        Row: {
+          amount_paise: number
+          concern: string | null
+          created_at: string
+          currency: string
+          detected_condition: string
+          doctor_id: string
+          doctor_name: string
+          id: string
+          is_test_payment: boolean
+          paid_at: string | null
+          patient_name: string
+          patient_phone: string
+          payment_method: string | null
+          payment_ref: string | null
+          razorpay_order_id: string | null
+          scan_id: string
+          slot_at: string
+          specialty: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount_paise: number
+          concern?: string | null
+          created_at?: string
+          currency?: string
+          detected_condition: string
+          doctor_id: string
+          doctor_name: string
+          id?: string
+          is_test_payment?: boolean
+          paid_at?: string | null
+          patient_name: string
+          patient_phone: string
+          payment_method?: string | null
+          payment_ref?: string | null
+          razorpay_order_id?: string | null
+          scan_id: string
+          slot_at: string
+          specialty: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount_paise?: number
+          concern?: string | null
+          created_at?: string
+          currency?: string
+          detected_condition?: string
+          doctor_id?: string
+          doctor_name?: string
+          id?: string
+          is_test_payment?: boolean
+          paid_at?: string | null
+          patient_name?: string
+          patient_phone?: string
+          payment_method?: string | null
+          payment_ref?: string | null
+          razorpay_order_id?: string | null
+          scan_id?: string
+          slot_at?: string
+          specialty?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultations_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scans: {
         Row: {
           ai_error: string | null

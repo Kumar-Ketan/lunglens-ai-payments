@@ -8,6 +8,13 @@
       "when": 1794888767694,
       "tag": "0000_create_scans",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794888792107,
+      "tag": "0001_create_consultations",
+      "breakpoints": true
     }
   ]
 }
