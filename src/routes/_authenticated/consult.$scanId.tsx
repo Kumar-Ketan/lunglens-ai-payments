@@ -88,7 +88,7 @@ function BookingForm({ scan, conditions }: { scan: Scan; conditions: string[] })
   }, []);
 
   const suitable = DOCTORS.filter((d) => conditions.some((c) => d.treats.includes(c as never)));
-  const [doctorId, setDoctorId] = useState(suitable[0]?.id ?? DOCTORS[0].id);
+  const [doctorId, setDoctorId] = useState(suitable[0]?.id ?? DOCTORS[0]!.id);
   const doctor = DOCTORS.find((d) => d.id === doctorId)!;
   const days = useMemo(() => upcomingDays(doctor, now), [doctor, now]);
   const [dateKey, setDateKey] = useState<string>(days[0] ?? "");
