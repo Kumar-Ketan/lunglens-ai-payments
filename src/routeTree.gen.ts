@@ -10,33 +10,187 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as MetricsRouteImport } from './routes/metrics'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthenticatedDetectRouteImport } from './routes/_authenticated/detect'
+import { Route as AuthenticatedConsultScanIdRouteImport } from './routes/_authenticated/consult.$scanId'
+import { Route as AuthenticatedConsultationsIndexRouteImport } from './routes/_authenticated/consultations.index'
+import { Route as AuthenticatedConsultationsConsultationIdRouteImport } from './routes/_authenticated/consultations.$consultationId'
+import { Route as AuthenticatedHistoryIndexRouteImport } from './routes/_authenticated/history.index'
+import { Route as AuthenticatedHistoryScanIdRouteImport } from './routes/_authenticated/history.$scanId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HowItWorksRoute = HowItWorksRouteImport.update({
+  id: '/how-it-works',
+  path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MetricsRoute = MetricsRouteImport.update({
+  id: '/metrics',
+  path: '/metrics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedDetectRoute = AuthenticatedDetectRouteImport.update({
+  id: '/detect',
+  path: '/detect',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedConsultScanIdRoute =
+  AuthenticatedConsultScanIdRouteImport.update({
+    id: '/consult/$scanId',
+    path: '/consult/$scanId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedConsultationsIndexRoute =
+  AuthenticatedConsultationsIndexRouteImport.update({
+    id: '/consultations/',
+    path: '/consultations/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedConsultationsConsultationIdRoute =
+  AuthenticatedConsultationsConsultationIdRouteImport.update({
+    id: '/consultations/$consultationId',
+    path: '/consultations/$consultationId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHistoryIndexRoute =
+  AuthenticatedHistoryIndexRouteImport.update({
+    id: '/history/',
+    path: '/history/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedHistoryScanIdRoute =
+  AuthenticatedHistoryScanIdRouteImport.update({
+    id: '/history/$scanId',
+    path: '/history/$scanId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/auth': typeof AuthRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/metrics': typeof MetricsRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/detect': typeof AuthenticatedDetectRoute
+  '/consult/$scanId': typeof AuthenticatedConsultScanIdRoute
+  '/consultations/$consultationId': typeof AuthenticatedConsultationsConsultationIdRoute
+  '/history/$scanId': typeof AuthenticatedHistoryScanIdRoute
+  '/consultations/': typeof AuthenticatedConsultationsIndexRoute
+  '/history/': typeof AuthenticatedHistoryIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/auth': typeof AuthRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/metrics': typeof MetricsRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/detect': typeof AuthenticatedDetectRoute
+  '/consult/$scanId': typeof AuthenticatedConsultScanIdRoute
+  '/consultations/$consultationId': typeof AuthenticatedConsultationsConsultationIdRoute
+  '/history/$scanId': typeof AuthenticatedHistoryScanIdRoute
+  '/consultations': typeof AuthenticatedConsultationsIndexRoute
+  '/history': typeof AuthenticatedHistoryIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/about': typeof AboutRoute
+  '/auth': typeof AuthRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/metrics': typeof MetricsRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/detect': typeof AuthenticatedDetectRoute
+  '/_authenticated/consult/$scanId': typeof AuthenticatedConsultScanIdRoute
+  '/_authenticated/consultations/$consultationId': typeof AuthenticatedConsultationsConsultationIdRoute
+  '/_authenticated/history/$scanId': typeof AuthenticatedHistoryScanIdRoute
+  '/_authenticated/consultations/': typeof AuthenticatedConsultationsIndexRoute
+  '/_authenticated/history/': typeof AuthenticatedHistoryIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/auth'
+    | '/how-it-works'
+    | '/metrics'
+    | '/reset-password'
+    | '/detect'
+    | '/consult/$scanId'
+    | '/consultations/$consultationId'
+    | '/history/$scanId'
+    | '/consultations/'
+    | '/history/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/about'
+    | '/auth'
+    | '/how-it-works'
+    | '/metrics'
+    | '/reset-password'
+    | '/detect'
+    | '/consult/$scanId'
+    | '/consultations/$consultationId'
+    | '/history/$scanId'
+    | '/consultations'
+    | '/history'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/about'
+    | '/auth'
+    | '/how-it-works'
+    | '/metrics'
+    | '/reset-password'
+    | '/_authenticated/detect'
+    | '/_authenticated/consult/$scanId'
+    | '/_authenticated/consultations/$consultationId'
+    | '/_authenticated/history/$scanId'
+    | '/_authenticated/consultations/'
+    | '/_authenticated/history/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AboutRoute: typeof AboutRoute
+  AuthRoute: typeof AuthRoute
+  HowItWorksRoute: typeof HowItWorksRoute
+  MetricsRoute: typeof MetricsRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +202,123 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/how-it-works': {
+      id: '/how-it-works'
+      path: '/how-it-works'
+      fullPath: '/how-it-works'
+      preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/metrics': {
+      id: '/metrics'
+      path: '/metrics'
+      fullPath: '/metrics'
+      preLoaderRoute: typeof MetricsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/detect': {
+      id: '/_authenticated/detect'
+      path: '/detect'
+      fullPath: '/detect'
+      preLoaderRoute: typeof AuthenticatedDetectRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/consult/$scanId': {
+      id: '/_authenticated/consult/$scanId'
+      path: '/consult/$scanId'
+      fullPath: '/consult/$scanId'
+      preLoaderRoute: typeof AuthenticatedConsultScanIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/consultations/': {
+      id: '/_authenticated/consultations/'
+      path: '/consultations'
+      fullPath: '/consultations/'
+      preLoaderRoute: typeof AuthenticatedConsultationsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/consultations/$consultationId': {
+      id: '/_authenticated/consultations/$consultationId'
+      path: '/consultations/$consultationId'
+      fullPath: '/consultations/$consultationId'
+      preLoaderRoute: typeof AuthenticatedConsultationsConsultationIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/history/': {
+      id: '/_authenticated/history/'
+      path: '/history'
+      fullPath: '/history/'
+      preLoaderRoute: typeof AuthenticatedHistoryIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/history/$scanId': {
+      id: '/_authenticated/history/$scanId'
+      path: '/history/$scanId'
+      fullPath: '/history/$scanId'
+      preLoaderRoute: typeof AuthenticatedHistoryScanIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDetectRoute: typeof AuthenticatedDetectRoute
+  AuthenticatedConsultScanIdRoute: typeof AuthenticatedConsultScanIdRoute
+  AuthenticatedConsultationsConsultationIdRoute: typeof AuthenticatedConsultationsConsultationIdRoute
+  AuthenticatedHistoryScanIdRoute: typeof AuthenticatedHistoryScanIdRoute
+  AuthenticatedConsultationsIndexRoute: typeof AuthenticatedConsultationsIndexRoute
+  AuthenticatedHistoryIndexRoute: typeof AuthenticatedHistoryIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDetectRoute: AuthenticatedDetectRoute,
+  AuthenticatedConsultScanIdRoute: AuthenticatedConsultScanIdRoute,
+  AuthenticatedConsultationsConsultationIdRoute:
+    AuthenticatedConsultationsConsultationIdRoute,
+  AuthenticatedHistoryScanIdRoute: AuthenticatedHistoryScanIdRoute,
+  AuthenticatedConsultationsIndexRoute: AuthenticatedConsultationsIndexRoute,
+  AuthenticatedHistoryIndexRoute: AuthenticatedHistoryIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AboutRoute: AboutRoute,
+  AuthRoute: AuthRoute,
+  HowItWorksRoute: HowItWorksRoute,
+  MetricsRoute: MetricsRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
