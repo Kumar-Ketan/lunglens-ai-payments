@@ -14,7 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      scans: {
+        Row: {
+          ai_error: string | null
+          ai_findings: Json | null
+          ai_image_quality: string | null
+          ai_impression: string | null
+          ai_label: string | null
+          ai_normal: number | null
+          ai_pneumonia: number | null
+          ai_status: string
+          ai_tb: number | null
+          created_at: string
+          file_name: string
+          file_type: string
+          heatmap_path: string | null
+          id: string
+          image_path: string
+          model_version: string
+          notes: string | null
+          patient_ref: string | null
+          tb_label: string
+          tb_probability: number
+          user_id: string
+        }
+        Insert: {
+          ai_error?: string | null
+          ai_findings?: Json | null
+          ai_image_quality?: string | null
+          ai_impression?: string | null
+          ai_label?: string | null
+          ai_normal?: number | null
+          ai_pneumonia?: number | null
+          ai_status?: string
+          ai_tb?: number | null
+          created_at?: string
+          file_name: string
+          file_type: string
+          heatmap_path?: string | null
+          id?: string
+          image_path: string
+          model_version?: string
+          notes?: string | null
+          patient_ref?: string | null
+          tb_label: string
+          tb_probability: number
+          user_id?: string
+        }
+        Update: {
+          ai_error?: string | null
+          ai_findings?: Json | null
+          ai_image_quality?: string | null
+          ai_impression?: string | null
+          ai_label?: string | null
+          ai_normal?: number | null
+          ai_pneumonia?: number | null
+          ai_status?: string
+          ai_tb?: number | null
+          created_at?: string
+          file_name?: string
+          file_type?: string
+          heatmap_path?: string | null
+          id?: string
+          image_path?: string
+          model_version?: string
+          notes?: string | null
+          patient_ref?: string | null
+          tb_label?: string
+          tb_probability?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
