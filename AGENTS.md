@@ -28,3 +28,14 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+<!-- AGENT-MEMORY:BEGIN -->
+## Project rules
+
+- The ResNet18 TB model runs in the browser (ONNX); the server never runs it. Why: keeps the model free to host and works on edge workers.
+- The AI second opinion runs only in an authenticated server function that reads the user's own X-ray and writes results onto that scan row. Why: keeps the AI key server-side and RLS scoped to the owner.
+- Scan pages live under `_authenticated/history.*` as flat routes (no `history.tsx` layout). Why: avoids a layout that must render an Outlet.
+- Consultation payments use Razorpay (bring-your-own keys in secrets `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET`, optional `RAZORPAY_WEBHOOK_SECRET`). Why: Lovable built-in payments are unavailable for India-based sellers.
+- A booking becomes `confirmed` only server-side, after the checkout signature is verified and the payment is re-fetched from Razorpay and matches the booking's order, amount and currency (`src/lib/razorpay.ts`). Why: users have SELECT-only access to consultations and must never mark themselves paid.
+- The `/api/public/razorpay-webhook` route is a backup confirmation path and must verify `X-Razorpay-Signature` before doing anything. Why: public routes bypass auth.
+<!-- AGENT-MEMORY:END -->
