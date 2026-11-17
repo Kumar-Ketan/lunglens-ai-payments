@@ -18,23 +18,14 @@ export function formatInr(paise: number) {
   return `₹${Number.isInteger(rupees) ? rupees.toString() : rupees.toFixed(2)}`;
 }
 
+import { finalVerdict, type VerdictSignals } from "./final-verdict";
+
 export type Condition = "Tuberculosis" | "Pneumonia";
 
-type ScanSignals = {
-  tb_probability: number;
-  ai_status: string;
-  ai_label: string | null;
-};
-
-/** Conditions detected on a scan that make a doctor consultation available. */
-export function detectedConditions(scan: ScanSignals, tbThreshold = 0.5): Condition[] {
-  const found = new Set<Condition>();
-  if (scan.tb_probability >= tbThreshold) found.add("Tuberculosis");
-  if (scan.ai_status === "done") {
-    if (scan.ai_label === "Tuberculosis") found.add("Tuberculosis");
-    if (scan.ai_label === "Pneumonia") found.add("Pneumonia");
-  }
-  return (["Tuberculosis", "Pneumonia"] as const).filter((c) => found.has(c));
+/** Conditions that make a doctor consultation available: the single combined final result. */
+export function detectedConditions(scan: VerdictSignals): Condition[] {
+  const { label } = finalVerdict(scan);
+  return label === "Tuberculosis" || label === "Pneumonia" ? [label] : [];
 }
 
 export type Doctor = {

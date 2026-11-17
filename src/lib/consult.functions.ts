@@ -67,7 +67,7 @@ export const createConsultation = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: scan, error } = await context.supabase
       .from("scans")
-      .select("id, tb_probability, ai_status, ai_label")
+      .select("id, tb_probability, ai_status, ai_label, ai_tb, ai_pneumonia, ai_normal")
       .eq("id", data.scanId)
       .maybeSingle();
     if (error || !scan) throw new Error("Scan not found.");

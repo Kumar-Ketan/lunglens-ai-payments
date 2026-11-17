@@ -63,10 +63,21 @@ Review the frontal chest radiograph and give a structured research second opinio
 - Look for TB patterns: upper-lobe / apical infiltrates, cavitation, fibro-nodular opacities, hilar lymphadenopathy, miliary nodules, pleural effusion.
 - Look for pneumonia patterns: lobar or segmental consolidation, air bronchograms, patchy airspace opacities, typically lower/middle zones.
 - normal, pneumonia and tuberculosis are independent likelihoods between 0 and 1 (they need not sum to 1).
-- label is the most likely class; use Indeterminate if the image is not a chest X-ray or quality is too poor.
+- label MUST be the class with the highest likelihood (consistent with your numbers); use Indeterminate if the image is not a chest X-ray or quality is too poor.
 - If the image is not a chest radiograph set is_chest_xray to false, all likelihoods to 0, and explain in the impression.
+- TB and pneumonia can look alike. When a trained TB classifier flags TB, specifically check for TB signs (apical/upper-zone disease, cavities, nodules, hilar nodes) before calling it pneumonia, and only prefer pneumonia when lower-zone consolidation clearly dominates.
 - Give at most 5 findings, each naming a region (e.g. "Right upper zone").
 - Write the impression in plain clinical English, 2-4 sentences. Do not give treatment advice.`;
+
+function consistentLabel(o: AiXrayAnalysis): AiXrayAnalysis["label"] {
+  if (!o.is_chest_xray || o.label === "Indeterminate") return o.label;
+  const scores: [AiXrayAnalysis["label"], number][] = [
+    ["Normal", clamp(o.normal)],
+    ["Pneumonia", clamp(o.pneumonia)],
+    ["Tuberculosis", clamp(o.tuberculosis)],
+  ];
+  return scores.sort((a, b) => b[1] - a[1])[0]![0];
+}
 
 const clamp = (n: number) => (Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0);
 
@@ -91,7 +102,7 @@ export async function analyzeXrayWithAi(imageDataUrl: string, context: { tbModel
         content: [
           {
             type: "text",
-            text: `Analyse this chest X-ray. For reference only, our trained ResNet18 TB classifier output a TB probability of ${context.tbModelProbability.toFixed(3)}; form your own independent judgement from the image.`,
+            text: `Analyse this chest X-ray. For reference only, our trained ResNet18 TB classifier (validated on TB chest X-ray datasets) output a TB probability of ${context.tbModelProbability.toFixed(3)} (${context.tbModelProbability >= 0.5 ? "TB positive" : "TB negative"} at the 0.5 threshold). Base your reading on the image, but explain any disagreement with it in the impression.`,
           },
           { type: "image", image: new URL(imageDataUrl) },
         ],
@@ -116,6 +127,7 @@ export async function analyzeXrayWithAi(imageDataUrl: string, context: { tbModel
       normal: clamp(output.normal),
       pneumonia: clamp(output.pneumonia),
       tuberculosis: clamp(output.tuberculosis),
+      label: consistentLabel(output),
       findings: (output.findings ?? []).slice(0, 5),
     } satisfies AiXrayAnalysis;
   } catch (error) {
