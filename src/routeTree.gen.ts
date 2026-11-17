@@ -22,6 +22,7 @@ import { Route as AuthenticatedConsultationsIndexRouteImport } from './routes/_a
 import { Route as AuthenticatedConsultationsConsultationIdRouteImport } from './routes/_authenticated/consultations.$consultationId'
 import { Route as AuthenticatedHistoryIndexRouteImport } from './routes/_authenticated/history.index'
 import { Route as AuthenticatedHistoryScanIdRouteImport } from './routes/_authenticated/history.$scanId'
+import { Route as ApiPublicRazorpayWebhookRouteImport } from './routes/api/public/razorpay-webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -92,6 +93,12 @@ const AuthenticatedHistoryScanIdRoute =
     path: '/history/$scanId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicRazorpayWebhookRoute =
+  ApiPublicRazorpayWebhookRouteImport.update({
+    id: '/api/public/razorpay-webhook',
+    path: '/api/public/razorpay-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -104,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/consult/$scanId': typeof AuthenticatedConsultScanIdRoute
   '/consultations/$consultationId': typeof AuthenticatedConsultationsConsultationIdRoute
   '/history/$scanId': typeof AuthenticatedHistoryScanIdRoute
+  '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/consultations/': typeof AuthenticatedConsultationsIndexRoute
   '/history/': typeof AuthenticatedHistoryIndexRoute
 }
@@ -118,6 +126,7 @@ export interface FileRoutesByTo {
   '/consult/$scanId': typeof AuthenticatedConsultScanIdRoute
   '/consultations/$consultationId': typeof AuthenticatedConsultationsConsultationIdRoute
   '/history/$scanId': typeof AuthenticatedHistoryScanIdRoute
+  '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/consultations': typeof AuthenticatedConsultationsIndexRoute
   '/history': typeof AuthenticatedHistoryIndexRoute
 }
@@ -134,6 +143,7 @@ export interface FileRoutesById {
   '/_authenticated/consult/$scanId': typeof AuthenticatedConsultScanIdRoute
   '/_authenticated/consultations/$consultationId': typeof AuthenticatedConsultationsConsultationIdRoute
   '/_authenticated/history/$scanId': typeof AuthenticatedHistoryScanIdRoute
+  '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
   '/_authenticated/consultations/': typeof AuthenticatedConsultationsIndexRoute
   '/_authenticated/history/': typeof AuthenticatedHistoryIndexRoute
 }
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/consult/$scanId'
     | '/consultations/$consultationId'
     | '/history/$scanId'
+    | '/api/public/razorpay-webhook'
     | '/consultations/'
     | '/history/'
   fileRoutesByTo: FileRoutesByTo
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/consult/$scanId'
     | '/consultations/$consultationId'
     | '/history/$scanId'
+    | '/api/public/razorpay-webhook'
     | '/consultations'
     | '/history'
   id:
@@ -179,6 +191,7 @@ export interface FileRouteTypes {
     | '/_authenticated/consult/$scanId'
     | '/_authenticated/consultations/$consultationId'
     | '/_authenticated/history/$scanId'
+    | '/api/public/razorpay-webhook'
     | '/_authenticated/consultations/'
     | '/_authenticated/history/'
   fileRoutesById: FileRoutesById
@@ -191,6 +204,7 @@ export interface RootRouteChildren {
   HowItWorksRoute: typeof HowItWorksRoute
   MetricsRoute: typeof MetricsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiPublicRazorpayWebhookRoute: typeof ApiPublicRazorpayWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -286,6 +300,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHistoryScanIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/razorpay-webhook': {
+      id: '/api/public/razorpay-webhook'
+      path: '/api/public/razorpay-webhook'
+      fullPath: '/api/public/razorpay-webhook'
+      preLoaderRoute: typeof ApiPublicRazorpayWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -319,6 +340,7 @@ const rootRouteChildren: RootRouteChildren = {
   HowItWorksRoute: HowItWorksRoute,
   MetricsRoute: MetricsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiPublicRazorpayWebhookRoute: ApiPublicRazorpayWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

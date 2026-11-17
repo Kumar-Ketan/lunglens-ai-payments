@@ -1,4 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import type { Database } from "@/integrations/supabase/types";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
@@ -111,17 +114,14 @@ export const createConsultation = createServerFn({ method: "POST" })
     return { id: created.id };
   });
 
-async function loadOwnBooking(
-  supabase: { from: (t: "consultations") => any },
-  consultationId: string,
-) {
+async function loadOwnBooking(supabase: SupabaseClient<Database>, consultationId: string) {
   const { data: booking, error } = await supabase
     .from("consultations")
     .select("*")
     .eq("id", consultationId)
     .maybeSingle();
   if (error || !booking) throw new Error("Booking not found.");
-  return booking as import("@/lib/consultations").Consultation;
+  return booking;
 }
 
 /** Creates (or reuses) the Razorpay order for the caller's pending booking and returns checkout options. */

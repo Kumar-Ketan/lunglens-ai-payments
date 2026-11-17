@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, CircleAlert, CircleCheck, CircleX, FileText, Loader2, QrCode, ShieldCheck, Smartphone } from "lucide-react";
-import QRCode from "qrcode";
+import { ArrowLeft, CircleAlert, CircleCheck, CircleX, CreditCard, FileText, Loader2, ShieldCheck, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -18,8 +17,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { demoQrPayload, formatInr, formatSlot } from "@/lib/consult";
-import { cancelConsultation, confirmTestPayment } from "@/lib/consult.functions";
+import { formatInr, formatSlot } from "@/lib/consult";
+import { cancelConsultation, startPayment, verifyPayment } from "@/lib/consult.functions";
 import { consultationQueryOptions, statusLabel, statusTone, type Consultation } from "@/lib/consultations";
 
 export const Route = createFileRoute("/_authenticated/consultations/$consultationId")({
@@ -83,50 +82,92 @@ function useUpdateBooking() {
   };
 }
 
-function PaymentPanel({ booking }: { booking: Consultation }) {
-  const confirm = useServerFn(confirmTestPayment);
-  const update = useUpdateBooking();
-  const [qr, setQr] = useState<string | null>(null);
-  const [state, setState] = useState<"idle" | "verifying" | "failed">("idle");
+type RazorpaySuccess = { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string };
+type RazorpayInstance = { open: () => void; on: (event: string, cb: (r: { error?: { description?: string } }) => void) => void };
+declare global {
+  interface Window {
+    Razorpay?: new (options: Record<string, unknown>) => RazorpayInstance;
+  }
+}
 
-  useEffect(() => {
-    let alive = true;
-    QRCode.toDataURL(demoQrPayload(booking.id, booking.amount_paise), {
-      width: 480,
-      margin: 1,
-      errorCorrectionLevel: "M",
-    }).then((url) => alive && setQr(url));
-    return () => {
-      alive = false;
+let checkoutScript: Promise<void> | null = null;
+function loadRazorpayCheckout() {
+  if (window.Razorpay) return Promise.resolve();
+  checkoutScript ??= new Promise<void>((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://checkout.razorpay.com/v1/checkout.js";
+    s.async = true;
+    s.onload = () => resolve();
+    s.onerror = () => {
+      checkoutScript = null;
+      reject(new Error("Could not load the payment window. Check your connection and try again."));
     };
-  }, [booking.id, booking.amount_paise]);
+    document.body.appendChild(s);
+  });
+  return checkoutScript;
+}
+
+function PaymentPanel({ booking }: { booking: Consultation }) {
+  const start = useServerFn(startPayment);
+  const verify = useServerFn(verifyPayment);
+  const update = useUpdateBooking();
+  const [state, setState] = useState<"idle" | "opening" | "verifying" | "failed">("idle");
+  const [failure, setFailure] = useState<string | null>(null);
 
   async function pay() {
-    setState("verifying");
-    // Short pause so the demo feels like a gateway checking the payment.
-    await new Promise((r) => setTimeout(r, 1500));
+    setState("opening");
+    setFailure(null);
     try {
-      const updated = await confirm({ data: { consultationId: booking.id } });
-      update(updated);
-      toast.success("Payment received (test). Your consultation is confirmed.");
+      const [opts] = await Promise.all([start({ data: { consultationId: booking.id } }), loadRazorpayCheckout()]);
+      if (!window.Razorpay) throw new Error("Could not load the payment window.");
+      const rzp = new window.Razorpay({
+        key: opts.keyId,
+        order_id: opts.orderId,
+        amount: opts.amount,
+        currency: opts.currency,
+        name: "LungScan AI",
+        description: opts.description,
+        prefill: opts.prefill,
+        theme: { color: getComputedStyle(document.documentElement).getPropertyValue("--razorpay-theme").trim() || undefined },
+        modal: { ondismiss: () => setState((s) => (s === "opening" ? "idle" : s)) },
+        handler: async (res: RazorpaySuccess) => {
+          setState("verifying");
+          try {
+            const updated = await verify({
+              data: {
+                consultationId: booking.id,
+                orderId: res.razorpay_order_id,
+                paymentId: res.razorpay_payment_id,
+                signature: res.razorpay_signature,
+              },
+            });
+            update(updated);
+            toast.success("Payment received. Your consultation is confirmed.");
+          } catch (e) {
+            setState("failed");
+            setFailure(e instanceof Error ? e.message : "We could not verify this payment.");
+          }
+        },
+      });
+      rzp.on("payment.failed", (r) => {
+        setState("failed");
+        setFailure(r.error?.description ?? "The payment did not go through. No money was taken.");
+      });
+      rzp.open();
     } catch (e) {
       setState("idle");
-      toast.error(e instanceof Error ? e.message : "Could not confirm the payment.");
+      toast.error(e instanceof Error ? e.message : "Could not start the payment.");
     }
   }
 
-  async function fail() {
-    setState("verifying");
-    await new Promise((r) => setTimeout(r, 1200));
-    setState("failed");
-  }
+  const busy = state === "opening" || state === "verifying";
 
   return (
     <div className="panel overflow-hidden">
       <div className="flex items-center justify-between gap-3 border-b border-border px-6 py-4">
         <div className="flex items-center gap-2">
-          <QrCode className="size-4 text-primary" aria-hidden="true" />
-          <span className="font-semibold">LungScan Pay</span>
+          <CreditCard className="size-4 text-primary" aria-hidden="true" />
+          <span className="font-semibold">Pay securely with Razorpay</span>
         </div>
         <span className="data rounded-full border border-pneumonia/40 bg-pneumonia/10 px-2.5 py-0.5 text-xs uppercase text-pneumonia">
           Test mode
@@ -136,49 +177,37 @@ function PaymentPanel({ booking }: { booking: Consultation }) {
         <p className="text-sm text-muted-foreground">Amount to pay</p>
         <p className="data mt-1 text-4xl font-semibold">{formatInr(booking.amount_paise)}</p>
 
-        <div className="relative mx-auto mt-6 w-full max-w-[260px] rounded-2xl bg-foreground p-3">
-          {qr ? (
-            <img src={qr} alt="Test payment QR code" className="aspect-square w-full" />
-          ) : (
-            <div className="grid aspect-square place-items-center">
-              <Loader2 className="size-6 animate-spin text-background" aria-hidden="true" />
-            </div>
-          )}
-          {state === "verifying" && (
-            <div className="absolute inset-0 grid place-items-center rounded-2xl bg-background/85">
-              <p className="flex items-center gap-2 text-sm font-medium">
-                <Loader2 className="size-4 animate-spin text-primary" aria-hidden="true" /> Verifying payment…
-              </p>
-            </div>
-          )}
-        </div>
-
         <p className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Smartphone className="size-4" aria-hidden="true" /> Scan with any UPI app, then tap "I have paid"
+          <Smartphone className="size-4" aria-hidden="true" /> UPI, cards, net banking and wallets
         </p>
 
-        {state === "failed" && (
+        {state === "verifying" && (
+          <p className="mt-4 flex items-center justify-center gap-2 text-sm font-medium" role="status">
+            <Loader2 className="size-4 animate-spin text-primary" aria-hidden="true" /> Verifying payment…
+          </p>
+        )}
+
+        {state === "failed" && failure && (
           <p
             className="mx-auto mt-4 flex max-w-sm items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-left text-sm"
             role="alert"
           >
             <CircleAlert className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden="true" />
-            Payment failed (test). No money was taken. You can try again.
+            {failure}
           </p>
         )}
 
         <div className="mx-auto mt-6 flex max-w-sm flex-col gap-2">
-          <Button variant="hero" onClick={pay} disabled={state === "verifying"}>
-            <CircleCheck aria-hidden="true" /> I have paid {formatInr(booking.amount_paise)}
-          </Button>
-          <Button variant="glass" onClick={fail} disabled={state === "verifying"}>
-            <CircleX aria-hidden="true" /> Simulate a failed payment
+          <Button variant="hero" onClick={pay} disabled={busy}>
+            {busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : <CircleCheck aria-hidden="true" />}
+            {state === "failed" ? "Try again" : `Pay ${formatInr(booking.amount_paise)}`}
           </Button>
         </div>
 
         <p className="mx-auto mt-6 flex max-w-sm items-start gap-2 text-left text-xs text-muted-foreground">
           <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden="true" />
-          This is a demo QR for a student project. It is not linked to any bank account and no money is ever debited.
+          Test mode: no real money is debited. Use UPI ID success@razorpay, or card 4111 1111 1111 1111 with any future
+          date and CVV.
         </p>
       </div>
     </div>
@@ -219,7 +248,7 @@ function CancelledPanel({ booking }: { booking: Consultation }) {
       </span>
       <h1 className="mt-4 text-2xl font-semibold sm:text-3xl">Booking cancelled</h1>
       <p className="mt-2 text-muted-foreground">
-        {booking.paid_at ? "The test payment would be refunded." : "No payment was made."} You can book a new time any
+        {booking.paid_at ? "Your payment will be refunded." : "No payment was made."} You can book a new time any
         time.
       </p>
       <Button asChild variant="hero" className="mt-6">
@@ -300,7 +329,7 @@ function BookingSummary({ booking }: { booking: Consultation }) {
           </div>
         ))}
         <div className="flex items-baseline justify-between gap-4 border-t border-border pt-3">
-          <dt className="font-medium">{booking.status === "confirmed" ? "Paid (test)" : "Fee"}</dt>
+          <dt className="font-medium">{booking.status === "confirmed" ? (booking.is_test_payment ? "Paid (test)" : "Paid") : "Fee"}</dt>
           <dd className="data text-xl font-semibold">{formatInr(booking.amount_paise)}</dd>
         </div>
       </dl>
