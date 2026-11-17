@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Brain, CircleAlert, Download, Loader2, RefreshCw, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Brain, CircleAlert, Download, Loader2, RefreshCw, Save, Stethoscope, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ProbabilityBar } from "@/components/scan/ProbabilityBar";
@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { confidenceBand, TB_THRESHOLD } from "@/lib/model/tb-label";
+import { detectedConditions } from "@/lib/consult";
 import { downloadScanReport } from "@/lib/report-pdf";
 import { runAiSecondOpinion } from "@/lib/scans.functions";
 import { deleteScan, findingsOf, pct, scanQueryOptions, signedUrlsQueryOptions, type Scan } from "@/lib/scans";
@@ -140,6 +141,13 @@ function ScanResult() {
           </Link>
         </Button>
         <div className="ml-auto flex flex-wrap gap-2">
+          {detectedConditions(scan).length > 0 && (
+            <Button asChild variant="hero">
+              <Link to="/consult/$scanId" params={{ scanId: scan.id }}>
+                <Stethoscope aria-hidden="true" /> Consult a doctor · ₹499
+              </Link>
+            </Button>
+          )}
           <Button variant="glass" onClick={onDownload} disabled={pdfBusy}>
             {pdfBusy ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Download aria-hidden="true" />} PDF report
           </Button>
