@@ -128,7 +128,6 @@ function PaymentPanel({ booking }: { booking: Consultation }) {
         name: "LungScan AI",
         description: opts.description,
         prefill: opts.prefill,
-        theme: { color: getComputedStyle(document.documentElement).getPropertyValue("--razorpay-theme").trim() || undefined },
         modal: { ondismiss: () => setState((s) => (s === "opening" ? "idle" : s)) },
         handler: async (res: RazorpaySuccess) => {
           setState("verifying");

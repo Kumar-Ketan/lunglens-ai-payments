@@ -295,7 +295,7 @@ function BookingForm({ scan, conditions }: { scan: Scan; conditions: string[] })
             </Button>
             <p className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden="true" />
-              Test mode: you will pay by scanning a QR code, but no money is debited.
+              Test mode: you will pay through Razorpay test checkout, so no money is debited.
             </p>
           </div>
         </aside>

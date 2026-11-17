@@ -3,7 +3,7 @@
  * Pure module: no Supabase or browser imports, so it is safe to unit test.
  */
 
-/** Consultation fee in paise (₹499). Demo only: no real money is ever collected. */
+/** Consultation fee in paise (₹499), charged through Razorpay. */
 export const CONSULT_FEE_PAISE = 49900;
 export const CONSULT_CURRENCY = "INR";
 export const CONSULT_TIMEZONE = "Asia/Kolkata";
@@ -166,9 +166,4 @@ export function formatDateKey(dateKey: string) {
   return new Intl.DateTimeFormat("en-IN", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" }).format(
     new Date(`${dateKey}T00:00:00Z`),
   );
-}
-
-/** Text encoded in the demo QR. Deliberately NOT a upi:// link so real UPI apps cannot pay it. */
-export function demoQrPayload(consultationId: string, amountPaise: number) {
-  return `LUNGSCAN-TEST-PAYMENT|order=${consultationId}|amount=${formatInr(amountPaise)}|NO REAL MONEY`;
 }

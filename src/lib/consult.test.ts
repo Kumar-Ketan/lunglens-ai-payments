@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   CONSULT_FEE_PAISE,
-  demoQrPayload,
   detectedConditions,
   doctorById,
   formatInr,
@@ -35,14 +34,6 @@ describe("consult a doctor is offered only when TB or pneumonia is detected", ()
   });
   it("ignores an AI label that is not finished yet", () => {
     expect(detectedConditions({ ...base, ai_status: "running", ai_label: "Pneumonia" })).toEqual([]);
-  });
-});
-
-describe("demo payment never takes real money", () => {
-  it("QR is not a payable UPI link", () => {
-    const payload = demoQrPayload("abc", CONSULT_FEE_PAISE);
-    expect(payload.startsWith("upi:")).toBe(false);
-    expect(payload).toContain("₹499");
   });
 });
 
